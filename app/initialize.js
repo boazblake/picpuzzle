@@ -1,41 +1,45 @@
-import m from "mithril"
-import Model from "./model.js"
-import Navbar from "./components/navbar"
-import Toolbar from "./components/toolbar"
-import Easel from "./pages/easel.js"
-import Gallery from "./pages/gallery.js"
-
-const Main = () => {
-  return { view: ({ children }) => m("section.main", children) }
+const log  = m => v => {
+  console.log(m,v)
+  ; return v
 }
 
-const Layout = () => {
-  return {
-    view: ({ children, attrs: { mdl } }) =>
-      m(".app", [
-        m(Navbar, { mdl }),
-        m(Main, { mdl }, children),
-        m(Toolbar, { mdl })
-      ])
-  }
+
+const getNewImage = mdl =>
+  m.request({method:'GET',url:mdl.imageUrl})
+  .then( log('S'), log('E'))
+
+const mdl = {
+  imageUrl: null, imageSrc:null
 }
 
-const routes = (mdl) => {
-  return {
-    "/easel": {
-      render: () => m(Layout, { mdl }, m(Easel, { mdl, key: Date.now() }))
-    },
-    "/gallery": {
-      onmatch: () => {
-        if (mdl.artworks().length == 0) return m.route.set("/easel")
-        mdl.rotateCanvas(0)
-      },
-      render: () => m(Layout, { mdl }, m(Gallery, { mdl }))
-    }
-  }
+const Toolbar = {
+  showInput: false,
+  view:({state, attrs:{mdl}}) => m('.toolbar', [
+    !state.showInput && m('button', {onclick: e => state.showInput = true}, 'New Image'),
+    state.showInput && [
+      m('input', {onchange: e => mdl.imageUrl= e.target.value}),
+      m('button', {onclick:e => {getNewImage(mdl); state.showInput = false}}, 'Get Image')
+    ],
+    m('button', {}, 'Restart')
+  ])
 }
+
+const Puzzle = {
+  view:({attrs:{mdl}}) => m('.puzzle', m('img', {src:mdl.imageSrc}))
+}
+
+
+const Game =  {
+  view:() => m('.container', [
+    m(Toolbar, {mdl}),
+    m(Puzzle, {mdl})
+  ])
+}
+
+
+
 
 document.addEventListener("DOMContentLoaded", () => {
   const root = document.body
-  m.route(root, "/gallery", routes(Model))
+  m.mount(root, Game)
 })

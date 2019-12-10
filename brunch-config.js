@@ -16,3 +16,8 @@ exports.plugins = {
 exports.paths = {
   public: "docs"
 }
+
+
+exports.npm = {
+  globals:{m: 'mithril'}
+}
